@@ -23,5 +23,11 @@
             <argument>%kernel.environment%</argument>
             <tag name="twig.extension" />
         </service>
+        <service id="Xilon\GaufretteAssetsBundle\Command\AssetsCommand" class="Xilon\GaufretteAssetsBundle\Command\AssetsCommand">
+            <argument type="service" id="opencloud.object_store" />
+            <argument>%rackespace_container_asset_name%</argument>
+            <argument>%kernel.project_dir%/public/bundles</argument>
+            <tag name="console.command" command="xilon:assets:copy" />
+        </service>
     </services>
 </container>
