@@ -2,25 +2,29 @@
 namespace Xilon\GaufretteAssetsBundle\Command;
 
 
-use Doctrine\Bundle\FixturesBundle\Command\LoadDataFixturesDoctrineCommand;
-use Doctrine\ORM\EntityManager;
-use Guzzle\Http\Exception\ServerErrorResponseException;
 use OpenCloud\ObjectStore\Resource\Container;
 use OpenCloud\ObjectStore\Service;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
-use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 
-class AssetsCommand extends ContainerAwareCommand
+class AssetsCommand extends Command
 {
 
     const REGEX = "/.*\.(coffee|mustache|nuspec|yml|markdown|txt|json|sh|js|php|md|html|less|scss|py|rst|JS|MD|HTML|LESS|SCSS|PY|RST)$/";
+
+    public function __construct(
+        private readonly Service $objectStore,
+        private readonly string $rackspaceContainerName,
+        private readonly string $publicBundlesPath,
+    ) {
+        parent::__construct();
+    }
+
     protected function configure(){
 
         $this
@@ -29,15 +33,12 @@ class AssetsCommand extends ContainerAwareCommand
             ->addArgument("folder",InputArgument::OPTIONAL,"Folder to Update")
             ->addOption("delete-all","d", InputOption::VALUE_NONE,"Delete All Before Write");
     }
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $folderName=$input->getArgument("folder");
         $deleteAll=$input->getOption("delete-all");
-        /** @var Service $objectStore */
 
-
-        $objectStore=$this->getContainer()->get("opencloud.object_store");
-        $container=$objectStore->getContainer($this->getContainer()->getParameter("rackespace_container_asset_name"));
+        $container=$this->objectStore->getContainer($this->rackspaceContainerName);
 
         if($deleteAll){
             $output->writeln("<info> Deleting All Asets</info>");
@@ -54,22 +55,23 @@ class AssetsCommand extends ContainerAwareCommand
         $this->uploadFontFiles($container,"woff",$output);
         $this->uploadFontFiles($container,"svg",$output);
         $output->writeln("<info> Ending Copy</info>");
+
+        return Command::SUCCESS;
     }
-    public function uploadFiles(Container $container,$folder="", OutputInterface $output){
+    public function uploadFiles(Container $container,$folder, OutputInterface $output){
+        $folder = $folder ?? "";
         $finder= new Finder();
-        $path=sprintf("%s/../web/bundles%s",$this->getContainer()->getParameter("kernel.root_dir"),$folder);
-        $uploadPath=sprintf("web/bundles%s",$folder);
+        $path=sprintf("%s%s",$this->publicBundlesPath,$folder);
         $finder->files()->in($path)
             ->notName("*.ttf")
             ->notName("*.eot")
             ->notName("*.otf")
             ->notName("*.woff")
             ->notName("*.svg");
-        $x=0;
         $files=[];
         /** @var SplFileInfo $file */
         foreach($finder as $file) {
-            $filePath=sprintf("%s/../web/bundles%s/%s",$this->getContainer()->getParameter("kernel.root_dir"),$folder,$file->getRelativePathname());
+            $filePath=sprintf("%s%s/%s",$this->publicBundlesPath,$folder,$file->getRelativePathname());
             $files[] = ["name" => $file->getFilename(), "path" =>$filePath ];
         }
         $fileChunks=array_chunk($files,100);
@@ -96,7 +98,7 @@ class AssetsCommand extends ContainerAwareCommand
     {
         $output->writeln(sprintf("<info> Uploading </info><comment> %s </comment><info> Files </info>",$fileType));
         $finder=new Finder();
-        $finder->files()->in($this->getContainer()->getParameter("kernel.root_dir")."/../web/bundles")->name(sprintf("*.%s",$fileType));
+        $finder->files()->in($this->publicBundlesPath)->name(sprintf("*.%s",$fileType));
         $contentType=$this->getContentType($fileType);
         foreach($finder as $file){
             $uploaded = false;
