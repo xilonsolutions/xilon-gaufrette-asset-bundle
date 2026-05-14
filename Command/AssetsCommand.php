@@ -2,8 +2,8 @@
 namespace Xilon\GaufretteAssetsBundle\Command;
 
 
-use OpenCloud\ObjectStore\Resource\Container;
-use OpenCloud\ObjectStore\Service;
+use OpenStack\ObjectStore\v1\Models\Container;
+use OpenStack\ObjectStore\v1\Service;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -42,7 +42,9 @@ class AssetsCommand extends Command
 
         if($deleteAll){
             $output->writeln("<info> Deleting All Asets</info>");
-            $container->deleteAllObjects();
+            foreach($container->listObjects() as $storageObject){
+                $container->getObject($storageObject->name)->delete();
+            }
         }
 
 
@@ -68,20 +70,22 @@ class AssetsCommand extends Command
             ->notName("*.otf")
             ->notName("*.woff")
             ->notName("*.svg");
-        $files=[];
         /** @var SplFileInfo $file */
         foreach($finder as $file) {
             $filePath=sprintf("%s%s/%s",$this->publicBundlesPath,$folder,$file->getRelativePathname());
-            $files[] = ["name" => $file->getFilename(), "path" =>$filePath ];
-        }
-        $fileChunks=array_chunk($files,100);
-        foreach($fileChunks as $chunk) {
             $uploaded = false;
             $tryes = 0;
             while (((!$uploaded) && ($tryes < 5))){
                 try {
                     $tryes++;
-                    $container->uploadObjects($chunk);
+                    $stream = fopen($filePath, "r");
+                    $container->createObject([
+                        "name"    => $file->getFilename(),
+                        "content" => $stream,
+                    ]);
+                    if (is_resource($stream)) {
+                        fclose($stream);
+                    }
                     $uploaded = true;
                 } catch (\Exception $e) {
                     if($tryes>=5){
@@ -107,11 +111,14 @@ class AssetsCommand extends Command
                 try {
                     $tryes++;
                     /** @var SplFileInfo $file */
-                    $container->uploadObject(sprintf("bundles/%s",$file->getRelativePathname()),file_get_contents($file->getRealPath()),
-                        [
-                            "Access-Control-Allow-Origin"=>"*",
-                            "Content-Type" => $contentType
-                        ]);
+                    $container->createObject([
+                        "name"        => sprintf("bundles/%s",$file->getRelativePathname()),
+                        "content"     => file_get_contents($file->getRealPath()),
+                        "contentType" => $contentType,
+                        "metadata"    => [
+                            "Access-Control-Allow-Origin" => "*",
+                        ],
+                    ]);
                     $uploaded = true;
                     $output->writeln(sprintf("<info> Uploaded </info><comment> %s </comment><info> File </info>",$file->getRelativePathname()));
                 } catch (\Exception $e) {
