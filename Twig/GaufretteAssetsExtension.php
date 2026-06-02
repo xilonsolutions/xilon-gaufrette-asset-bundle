@@ -10,9 +10,11 @@ namespace Xilon\GaufretteAssetsBundle\Twig;
 
 
 use Gaufrette\Filesystem;
+use Twig\Extension\AbstractExtension;
+use Twig\TwigFilter;
 use Xilon\GaufretteBundle\Service\GaufretteBaseUrlService;
 
-class GaufretteAssetsExtension extends \Twig_Extension {
+class GaufretteAssetsExtension extends AbstractExtension {
 
 
     private $filesystem;
@@ -24,7 +26,7 @@ class GaufretteAssetsExtension extends \Twig_Extension {
     public function getFilters()
     {
         return array(
-            new \Twig_SimpleFilter('cdn_asset', array($this, 'cdnAssetFilter')),
+            new TwigFilter('cdn_asset', array($this, 'cdnAssetFilter')),
         );
     }
 
