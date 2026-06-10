@@ -23,7 +23,7 @@ class GaufretteAssetsExtension extends AbstractExtension {
         $this->filesystem=$filesystem;
         $this->environment=$environment;
     }
-    public function getFilters()
+    public function getFilters(): array
     {
         return array(
             new TwigFilter('cdn_asset', array($this, 'cdnAssetFilter')),

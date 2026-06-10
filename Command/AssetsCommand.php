@@ -25,7 +25,7 @@ class AssetsCommand extends Command
         parent::__construct();
     }
 
-    protected function configure(){
+    protected function configure(): void{
 
         $this
             ->setName("xilon:assets:copy")
