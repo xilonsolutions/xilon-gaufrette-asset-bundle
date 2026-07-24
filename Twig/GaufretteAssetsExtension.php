@@ -6,6 +6,8 @@
  * Time: 13:50
  */
 
+declare(strict_types=1);
+
 namespace Xilon\GaufretteAssetsBundle\Twig;
 
 
@@ -17,12 +19,12 @@ use Xilon\GaufretteBundle\Service\GaufretteBaseUrlService;
 class GaufretteAssetsExtension extends AbstractExtension {
 
 
-    private $filesystem;
-    private $environment;
-    public function __construct(Filesystem $filesystem,$environment){
-        $this->filesystem=$filesystem;
-        $this->environment=$environment;
+    public function __construct(
+        private readonly Filesystem $filesystem,
+        private readonly string $environment,
+    ) {
     }
+    #[\Override]
     public function getFilters(): array
     {
         return array(
@@ -30,17 +32,19 @@ class GaufretteAssetsExtension extends AbstractExtension {
         );
     }
 
-    public function cdnAssetFilter($path){
+    public function cdnAssetFilter(string $path): string
+    {
         if(!$this->isProd()){
             return $path;
         }
         $cdnUri=GaufretteBaseUrlService::getGaufretteBaseUrl($this->filesystem);
         return sprintf("%s/%s",$cdnUri,$path);
     }
-    public function isProd(){
+    public function isProd(): bool
+    {
         return $this->environment=="prod";
     }
-    public function getName()
+    public function getName(): string
     {
       return "xilon.gauffrete_assets_extension";
     }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Xilon\GaufretteAssetsBundle\DependencyInjection;
 
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -17,6 +19,7 @@ class XilonGaufretteAssetsExtension extends Extension
     /**
      * {@inheritDoc}
      */
+    #[\Override]
     public function load(array $configs, ContainerBuilder $container): void
     {
         $configuration = new Configuration();

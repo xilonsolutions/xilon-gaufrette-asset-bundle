@@ -8,6 +8,8 @@
  * EXTEND OF Asset Abstract Command for not doing MKDIR
  */
 
+declare(strict_types=1);
+
 namespace Xilon\GaufretteAssetsBundle\Command;
 
 use Assetic\Asset\AssetCollectionInterface;
@@ -27,7 +29,7 @@ abstract class AbstractCommand extends BaseAbstractCommand  {
      *
      * @throws RuntimeException If there is a problem writing the asset
      */
-    private function doDump(AssetInterface $asset, OutputInterface $stdout)
+    private function doDump(AssetInterface $asset, OutputInterface $stdout): void
     {
         $combinations = VarUtils::getCombinations(
             $asset->getVars(),

@@ -8,6 +8,8 @@
  * FORK OF ASSETIC DUMP COMMAND FOR USE MY OWN ABSTRACT COMMAND CLASS
  */
 
+declare(strict_types=1);
+
 namespace Xilon\GaufretteAssetsBundle\Command;
 
 use Spork\Batch\Strategy\ChunkStrategy;
@@ -22,9 +24,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 
 class DumpCommand extends AbstractCommand {
-    private $spork;
+    private ?ProcessManager $spork = null;
 
-    protected function configure()
+    #[\Override]
+    protected function configure(): void
     {
         $this
             ->setName('bds:assetic:dump')
@@ -37,7 +40,8 @@ class DumpCommand extends AbstractCommand {
         ;
     }
 
-    protected function initialize(InputInterface $input, OutputInterface $stdout)
+    #[\Override]
+    protected function initialize(InputInterface $input, OutputInterface $stdout): void
     {
         if (null !== $input->getOption('forks')) {
             if (!class_exists('Spork\ProcessManager')) {
