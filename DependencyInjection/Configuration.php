@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Xilon\GaufretteAssetsBundle\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
@@ -15,6 +17,7 @@ class Configuration implements ConfigurationInterface
     /**
      * {@inheritDoc}
      */
+    #[\Override]
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('xilon_gaufrette_assets');

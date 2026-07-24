@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Xilon\GaufretteAssetsBundle\Command;
 
 
@@ -25,6 +28,7 @@ class AssetsCommand extends Command
         parent::__construct();
     }
 
+    #[\Override]
     protected function configure(): void{
 
         $this
@@ -33,6 +37,7 @@ class AssetsCommand extends Command
             ->addArgument("folder",InputArgument::OPTIONAL,"Folder to Update")
             ->addOption("delete-all","d", InputOption::VALUE_NONE,"Delete All Before Write");
     }
+    #[\Override]
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $folderName=$input->getArgument("folder");
@@ -60,7 +65,8 @@ class AssetsCommand extends Command
 
         return Command::SUCCESS;
     }
-    public function uploadFiles(Container $container,$folder, OutputInterface $output){
+    public function uploadFiles(Container $container, ?string $folder, OutputInterface $output): void
+    {
         $folder = $folder ?? "";
         $finder= new Finder();
         $path=sprintf("%s%s",$this->publicBundlesPath,$folder);
@@ -98,7 +104,7 @@ class AssetsCommand extends Command
             }
         }
     }
-    public function uploadFontFiles(Container $container,$fileType,$output)
+    public function uploadFontFiles(Container $container, string $fileType, OutputInterface $output): void
     {
         $output->writeln(sprintf("<info> Uploading </info><comment> %s </comment><info> Files </info>",$fileType));
         $finder=new Finder();
@@ -134,26 +140,15 @@ class AssetsCommand extends Command
         }
 
     }
-    public function getContentType($fileType)
+    public function getContentType(string $fileType): string
     {
-        $return = "";
-        switch ($fileType) {
-            case "ttf":
-                $return = "application/x-font-ttf";
-                break;
-            case "eot":
-                $return = "application/vnd.ms-fontobject";
-                break;
-            case "otf":
-                $return = "font/opentype";
-                break;
-            case "woff":
-                $return = "application/font-woff";
-                break;
-            case "svg":
-                $return = "image/svg+xml";
-                break;
-        }
-        return $return;
+        return match ($fileType) {
+            "ttf" => "application/x-font-ttf",
+            "eot" => "application/vnd.ms-fontobject",
+            "otf" => "font/opentype",
+            "woff" => "application/font-woff",
+            "svg" => "image/svg+xml",
+            default => "",
+        };
     }
 }
